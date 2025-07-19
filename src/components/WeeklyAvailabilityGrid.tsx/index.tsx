@@ -15,6 +15,41 @@ const daysOfWeek = [
   "Saturday",
   "Sunday",
 ];
+import { createClient } from "@/lib/supabaseClient";
+
+import { useMemo, useEffect } from "react";
+import { toast } from "sonner";
+
+function getCurrentWeekRange(offset = 0): { start: Date; end: Date } {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const diffToMonday = (dayOfWeek + 6) % 7;
+
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - diffToMonday + offset * 7);
+  monday.setHours(0, 0, 0, 0);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+
+  return { start: monday, end: sunday };
+}
+
+function formatWeekRange(start: Date, end: Date): string {
+  const options: Intl.DateTimeFormatOptions = {
+    month: "short",
+    day: "numeric",
+  };
+
+  const startStr = start.toLocaleDateString(undefined, options);
+  const endStr = end.toLocaleDateString(undefined, {
+    ...options,
+    year: "numeric",
+  });
+
+  return `${startStr} – ${endStr}`;
+}
 
 function generateTimeSlots(): string[] {
   const slots: string[] = [];
@@ -30,20 +65,169 @@ function generateTimeSlots(): string[] {
 const timeSlots = generateTimeSlots();
 
 export default function WeeklyAvailabilityGrid(): JSX.Element {
-  const [selectedSlots, setSelectedSlots] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [selectedSlots, setSelectedSlots] = useState<
+    Record<number, Record<string, boolean>>
+  >({});
+  const supabase = createClient();
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleToggle = (day: string, time: string): void => {
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user?.id) {
+        setUserId(data.user.id);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadAvailability = async () => {
+      const { data, error } = await supabase
+        .from("availability")
+        .select("week_offset, slots")
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("Failed to load availability", error);
+        return;
+      }
+
+      const grouped = data.reduce((acc: any, row: any) => {
+        acc[row.week_offset] = row.slots;
+        return acc;
+      }, {});
+
+      setSelectedSlots(grouped);
+    };
+
+    loadAvailability();
+  }, [userId]);
+
+  const weekRange = useMemo(() => {
+    const { start, end } = getCurrentWeekRange(weekOffset);
+    return formatWeekRange(start, end);
+  }, [weekOffset]);
+
+  const weekSlots = selectedSlots[weekOffset] || {};
+
+  const handleToggle = async (day: string, time: string): Promise<void> => {
     const key = `${day}-${time}`;
-    setSelectedSlots((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    const updatedWeek = {
+      ...selectedSlots[weekOffset],
+      [key]: !selectedSlots[weekOffset]?.[key],
+    };
+
+    const updatedAll = {
+      ...selectedSlots,
+      [weekOffset]: updatedWeek,
+    };
+
+    setSelectedSlots(updatedAll);
+
+    if (!userId) return;
+
+    const { error } = await supabase.from("availability").upsert(
+      {
+        user_id: userId,
+        week_offset: weekOffset,
+        slots: updatedWeek,
+      },
+      { onConflict: "user_id,week_offset" }
+    );
+
+    if (error) {
+      console.error("Failed to save availability", error);
+      toast.error("Failed to save availability");
+    } else {
+      toast.success("Availability saved!");
+    }
+  };
+
+  const copyAvailabilityToFutureWeeks = async (
+    weeksAhead: number
+  ): Promise<void> => {
+    if (!userId) return;
+
+    const sourceWeek = selectedSlots[weekOffset];
+    if (!sourceWeek) {
+      toast.error("No availability set for this week to copy.");
+      return;
+    }
+
+    const updatedSlots = { ...selectedSlots };
+    let hasError = false;
+
+    for (let i = 1; i <= weeksAhead; i++) {
+      const targetOffset = weekOffset + i;
+
+      updatedSlots[targetOffset] = { ...sourceWeek };
+
+      const { error } = await supabase.from("availability").upsert(
+        {
+          user_id: userId,
+          week_offset: targetOffset,
+          slots: sourceWeek,
+        },
+        { onConflict: "user_id,week_offset" }
+      );
+
+      if (error) {
+        console.error(`Failed to copy to week ${targetOffset}:`, error);
+        hasError = true;
+      }
+    }
+
+    setSelectedSlots(updatedSlots);
+
+    if (hasError) {
+      toast.error("Some weeks failed to save.");
+    } else {
+      toast.success(
+        `Copied this week’s availability to next ${weeksAhead} week${
+          weeksAhead > 1 ? "s" : ""
+        }`
+      );
+    }
   };
 
   return (
     <div className="overflow-auto border rounded-md">
+      <div className="flex items-center justify-center gap-4 mb-4 mt-4">
+        <button
+          onClick={() => setWeekOffset((prev) => prev - 1)}
+          className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition"
+        >
+          ⟵ Previous
+        </button>
+
+        <div className="text-lg font-semibold text-gray-700">{weekRange}</div>
+
+        <button
+          onClick={() => setWeekOffset((prev) => prev + 1)}
+          className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition"
+        >
+          Next ⟶
+        </button>
+      </div>
+      <div className="flex items-center justify-center gap-4 mb-4">
+        <button
+          onClick={() => copyAvailabilityToFutureWeeks(1)}
+          className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+        >
+          Copy to Next Week
+        </button>
+
+        <button
+          onClick={() => copyAvailabilityToFutureWeeks(3)}
+          className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+        >
+          Copy to Next 3 Weeks
+        </button>
+      </div>
+
       <table className="min-w-full border-collapse table-fixed text-sm">
         <thead>
           <tr>
@@ -63,7 +247,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
               </td>
               {daysOfWeek.map((day) => {
                 const key = `${day}-${time}`;
-                const isSelected = selectedSlots[key];
+                const isSelected = weekSlots[key];
                 return (
                   <td
                     key={key}
