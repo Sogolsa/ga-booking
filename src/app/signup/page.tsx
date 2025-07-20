@@ -34,6 +34,7 @@ export default function SignupPage() {
         data: metadata,
       },
     });
+
     if (error) {
       setError(error.message);
     } else {
@@ -75,7 +76,7 @@ export default function SignupPage() {
         <option value="tutor">I am a GA / Tutor</option>
       </select>
       <button
-        className="w-full bg-green-600 text-white p-2"
+        className="w-full bg-green-600 text-white p-2 cursor-pointer"
         onClick={handleSignup}
       >
         Sign Up

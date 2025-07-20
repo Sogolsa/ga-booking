@@ -83,7 +83,7 @@ export default function LoginPage() {
         onChange={(e) => setPassword(e.target.value)}
       />
       <button
-        className="w-full bg-blue-600 text-white p-2"
+        className="w-full bg-blue-600 text-white p-2 cursor-pointer"
         onClick={handleLogin}
       >
         Login

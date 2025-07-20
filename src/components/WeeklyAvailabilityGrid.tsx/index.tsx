@@ -4,79 +4,18 @@ import { useState, JSX, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabaseClient";
+import { PostgrestError } from "@supabase/supabase-js";
+
+import {
+  getDateForDayInWeek,
+  getCurrentWeekRange,
+  formatWeekRange,
+  daysOfWeek,
+} from "@/lib/utils/dateUtils";
 
 const startHour = 8;
 const endHour = 20;
 const interval = 30;
-
-const daysOfWeek = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
-
-function getDateForDayInWeek(day: string, weekOffset: number): string {
-  const dayMap: Record<string, number> = {
-    Sunday: 6,
-    Monday: 0,
-    Tuesday: 1,
-    Wednesday: 2,
-    Thursday: 3,
-    Friday: 4,
-    Saturday: 5,
-  };
-
-  const baseDate = new Date();
-  const currentDay = baseDate.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
-  const diffToMonday = (currentDay + 6) % 7;
-
-  const startOfWeek = new Date(baseDate);
-  startOfWeek.setDate(baseDate.getDate() - diffToMonday + weekOffset * 7);
-  startOfWeek.setHours(0, 0, 0, 0);
-
-  const targetDate = new Date(startOfWeek);
-  targetDate.setDate(startOfWeek.getDate() + dayMap[day]);
-
-  return targetDate.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function getCurrentWeekRange(offset = 0): { start: Date; end: Date } {
-  const today = new Date();
-  const dayOfWeek = today.getDay();
-  const diffToMonday = (dayOfWeek + 6) % 7;
-
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - diffToMonday + offset * 7);
-  monday.setHours(0, 0, 0, 0);
-
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
-
-  return { start: monday, end: sunday };
-}
-
-function formatWeekRange(start: Date, end: Date): string {
-  const options: Intl.DateTimeFormatOptions = {
-    month: "short",
-    day: "numeric",
-  };
-
-  const startStr = start.toLocaleDateString(undefined, options);
-  const endStr = end.toLocaleDateString(undefined, {
-    ...options,
-    year: "numeric",
-  });
-
-  return `${startStr} – ${endStr}`;
-}
 
 function generateTimeSlots(): string[] {
   const slots: string[] = [];
@@ -91,6 +30,19 @@ function generateTimeSlots(): string[] {
 
 const timeSlots = generateTimeSlots();
 
+type Appointment = {
+  slot: string;
+  week_offset: number;
+  student: {
+    name: string;
+  } | null;
+};
+
+type AvailabilityRow = {
+  week_offset: number;
+  slots: Record<string, boolean>;
+};
+
 export default function WeeklyAvailabilityGrid(): JSX.Element {
   const [selectedSlots, setSelectedSlots] = useState<
     Record<number, Record<string, boolean>>
@@ -98,6 +50,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
   const supabase = createClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [bookedSlots, setBookedSlots] = useState<Record<string, string>>({});
 
   const [weekOffset, setWeekOffset] = useState(0);
   const router = useRouter();
@@ -117,20 +70,45 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
         return;
       }
 
-      const { data: availability, error } = await supabase
+      const { data: availability, error: availabilityError } = await supabase
         .from("availability")
         .select("week_offset, slots")
         .eq("user_id", user.id);
 
-      if (error) {
-        console.error("Failed to load availability", error);
+      if (availabilityError) {
+        console.error("Failed to load availability", availabilityError);
         return;
       }
 
-      const grouped = availability.reduce((acc: any, row: any) => {
-        acc[row.week_offset] = row.slots;
-        return acc;
-      }, {});
+      const grouped = (availability as AvailabilityRow[]).reduce(
+        (acc: Record<number, Record<string, boolean>>, row) => {
+          acc[row.week_offset] = row.slots;
+          return acc;
+        },
+        {}
+      );
+
+      const response = await supabase
+        .from("appointments")
+        .select("week_offset, slot, student:users(name)")
+        .eq("tutor_id", user.id)
+        .eq("week_offset", weekOffset);
+
+      const appointments = response.data as Appointment[] | null;
+      const appError: PostgrestError | null = response.error;
+
+      if (appError) {
+        console.error("Failed to fetch appointments", appError);
+      } else {
+        const booked: Record<string, string> = {};
+
+        for (const appt of appointments ?? []) {
+          const fullKey = `${appt.week_offset}-${appt.slot}`;
+          booked[fullKey] = appt.student?.name ?? "Unknown";
+        }
+
+        setBookedSlots(booked);
+      }
 
       setSelectedSlots(grouped);
     };
@@ -149,6 +127,13 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
     if (!userId) return;
 
     const key = `${day}-${time}`;
+
+    const fullKey = `${weekOffset}-${key}`;
+    if (bookedSlots[fullKey]) {
+      toast.warning("You cannot remove availability for a booked slot.");
+      return;
+    }
+
     const currentWeekSlots = selectedSlots[weekOffset] || {};
     const toggledValue = !currentWeekSlots?.[key];
 
@@ -201,19 +186,27 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
       return;
     }
 
+    // Filter out slots that are booked
+    const filteredSourceWeek: Record<string, boolean> = Object.fromEntries(
+      Object.entries(sourceWeek).filter(
+        ([slotKey, isAvailable]) =>
+          isAvailable && !bookedSlots[`${weekOffset}-${slotKey}`]
+      )
+    );
+
     const updatedSlots = { ...selectedSlots };
     let hasError = false;
 
     for (let i = 1; i <= weeksAhead; i++) {
       const targetOffset = weekOffset + i;
 
-      updatedSlots[targetOffset] = { ...sourceWeek };
+      updatedSlots[targetOffset] = { ...filteredSourceWeek };
 
       const { error } = await supabase.from("availability").upsert(
         {
           user_id: userId,
           week_offset: targetOffset,
-          slots: sourceWeek,
+          slots: filteredSourceWeek,
         },
         { onConflict: "user_id,week_offset" }
       );
@@ -242,7 +235,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
       <div className="flex items-center justify-center gap-4 mb-4 mt-4">
         <button
           onClick={() => setWeekOffset((prev) => prev - 1)}
-          className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition"
+          className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition cursor-pointer"
         >
           ⟵ Previous
         </button>
@@ -251,7 +244,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
 
         <button
           onClick={() => setWeekOffset((prev) => prev + 1)}
-          className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition"
+          className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition cursor-pointer"
         >
           Next ⟶
         </button>
@@ -259,14 +252,14 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
       <div className="flex items-center justify-center gap-4 mb-4">
         <button
           onClick={() => copyAvailabilityToFutureWeeks(1)}
-          className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+          className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition cursor-pointer"
         >
           Copy to Next Week
         </button>
 
         <button
           onClick={() => copyAvailabilityToFutureWeeks(3)}
-          className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+          className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition cursor-pointer"
         >
           Copy to Next 3 Weeks
         </button>
@@ -276,11 +269,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
         <thead>
           <tr>
             <th className="w-24 p-2 border text-left bg-gray-100">Time</th>
-            {/* {daysOfWeek.map((day) => (
-              <th key={day} className="p-2 border bg-gray-100 text-center">
-                {day}
-              </th>
-            ))} */}
+
             {daysOfWeek.map((day) => (
               <th key={day} className="p-2 border bg-gray-100 text-center">
                 {day}
