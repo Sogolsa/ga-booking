@@ -19,6 +19,34 @@ const daysOfWeek = [
   "Sunday",
 ];
 
+function getDateForDayInWeek(day: string, weekOffset: number): string {
+  const dayMap: Record<string, number> = {
+    Sunday: 6,
+    Monday: 0,
+    Tuesday: 1,
+    Wednesday: 2,
+    Thursday: 3,
+    Friday: 4,
+    Saturday: 5,
+  };
+
+  const baseDate = new Date();
+  const currentDay = baseDate.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+  const diffToMonday = (currentDay + 6) % 7;
+
+  const startOfWeek = new Date(baseDate);
+  startOfWeek.setDate(baseDate.getDate() - diffToMonday + weekOffset * 7);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const targetDate = new Date(startOfWeek);
+  targetDate.setDate(startOfWeek.getDate() + dayMap[day]);
+
+  return targetDate.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
 function getCurrentWeekRange(offset = 0): { start: Date; end: Date } {
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -74,14 +102,6 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
   const [weekOffset, setWeekOffset] = useState(0);
   const router = useRouter();
 
-  //   useEffect(() => {
-  //     supabase.auth.getUser().then(({ data }) => {
-  //       if (data?.user?.id) {
-  //         setUserId(data.user.id);
-  //       }
-  //     });
-  //   }, []);
-
   useEffect(() => {
     const fetchUserAndData = async () => {
       const { data } = await supabase.auth.getUser();
@@ -118,70 +138,12 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
     fetchUserAndData();
   }, []);
 
-  //   useEffect(() => {
-  //     if (!userId) return;
-
-  //     const loadAvailability = async () => {
-  //       const { data, error } = await supabase
-  //         .from("availability")
-  //         .select("week_offset, slots")
-  //         .eq("user_id", userId);
-
-  //       if (error) {
-  //         console.error("Failed to load availability", error);
-  //         return;
-  //       }
-
-  //       const grouped = data.reduce((acc: any, row: any) => {
-  //         acc[row.week_offset] = row.slots;
-  //         return acc;
-  //       }, {});
-
-  //       setSelectedSlots(grouped);
-  //     };
-
-  //     loadAvailability();
-  //   }, [userId]);
-
   const weekRange = useMemo(() => {
     const { start, end } = getCurrentWeekRange(weekOffset);
     return formatWeekRange(start, end);
   }, [weekOffset]);
 
   const weekSlots = selectedSlots[weekOffset] || {};
-
-  //   const handleToggle = async (day: string, time: string): Promise<void> => {
-  //     const key = `${day}-${time}`;
-  //     const updatedWeek = {
-  //       ...selectedSlots[weekOffset],
-  //       [key]: !selectedSlots[weekOffset]?.[key],
-  //     };
-
-  //     const updatedAll = {
-  //       ...selectedSlots,
-  //       [weekOffset]: updatedWeek,
-  //     };
-
-  //     setSelectedSlots(updatedAll);
-
-  //     if (!userId) return;
-
-  //     const { error } = await supabase.from("availability").upsert(
-  //       {
-  //         user_id: userId,
-  //         week_offset: weekOffset,
-  //         slots: updatedWeek,
-  //       },
-  //       { onConflict: "user_id,week_offset" }
-  //     );
-
-  //     if (error) {
-  //       console.error("Failed to save availability", error);
-  //       toast.error("Failed to save availability");
-  //     } else {
-  //       toast.success("Availability saved!");
-  //     }
-  //   };
 
   const handleToggle = async (day: string, time: string): Promise<void> => {
     if (!userId) return;
@@ -314,9 +276,18 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
         <thead>
           <tr>
             <th className="w-24 p-2 border text-left bg-gray-100">Time</th>
+            {/* {daysOfWeek.map((day) => (
+              <th key={day} className="p-2 border bg-gray-100 text-center">
+                {day}
+              </th>
+            ))} */}
             {daysOfWeek.map((day) => (
               <th key={day} className="p-2 border bg-gray-100 text-center">
                 {day}
+                <br />
+                <span className="text-xs text-gray-500">
+                  {getDateForDayInWeek(day, weekOffset)}
+                </span>
               </th>
             ))}
           </tr>
