@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, JSX } from "react";
+import { useState, JSX, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabaseClient";
 
 const startHour = 8;
 const endHour = 20;
@@ -15,10 +18,6 @@ const daysOfWeek = [
   "Saturday",
   "Sunday",
 ];
-import { createClient } from "@/lib/supabaseClient";
-
-import { useMemo, useEffect } from "react";
-import { toast } from "sonner";
 
 function getCurrentWeekRange(offset = 0): { start: Date; end: Date } {
   const today = new Date();
@@ -70,32 +69,45 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
   >({});
   const supabase = createClient();
   const [userId, setUserId] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
 
   const [weekOffset, setWeekOffset] = useState(0);
+  const router = useRouter();
+
+  //   useEffect(() => {
+  //     supabase.auth.getUser().then(({ data }) => {
+  //       if (data?.user?.id) {
+  //         setUserId(data.user.id);
+  //       }
+  //     });
+  //   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user?.id) {
-        setUserId(data.user.id);
+    const fetchUserAndData = async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+      if (!user?.id) return;
+
+      const role = user.user_metadata?.role;
+      setUserId(user.id);
+      setRole(role);
+
+      if (role !== "tutor") {
+        router.push("/book");
+        return;
       }
-    });
-  }, []);
 
-  useEffect(() => {
-    if (!userId) return;
-
-    const loadAvailability = async () => {
-      const { data, error } = await supabase
+      const { data: availability, error } = await supabase
         .from("availability")
         .select("week_offset, slots")
-        .eq("user_id", userId);
+        .eq("user_id", user.id);
 
       if (error) {
         console.error("Failed to load availability", error);
         return;
       }
 
-      const grouped = data.reduce((acc: any, row: any) => {
+      const grouped = availability.reduce((acc: any, row: any) => {
         acc[row.week_offset] = row.slots;
         return acc;
       }, {});
@@ -103,8 +115,33 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
       setSelectedSlots(grouped);
     };
 
-    loadAvailability();
-  }, [userId]);
+    fetchUserAndData();
+  }, []);
+
+  //   useEffect(() => {
+  //     if (!userId) return;
+
+  //     const loadAvailability = async () => {
+  //       const { data, error } = await supabase
+  //         .from("availability")
+  //         .select("week_offset, slots")
+  //         .eq("user_id", userId);
+
+  //       if (error) {
+  //         console.error("Failed to load availability", error);
+  //         return;
+  //       }
+
+  //       const grouped = data.reduce((acc: any, row: any) => {
+  //         acc[row.week_offset] = row.slots;
+  //         return acc;
+  //       }, {});
+
+  //       setSelectedSlots(grouped);
+  //     };
+
+  //     loadAvailability();
+  //   }, [userId]);
 
   const weekRange = useMemo(() => {
     const { start, end } = getCurrentWeekRange(weekOffset);
@@ -113,27 +150,72 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
 
   const weekSlots = selectedSlots[weekOffset] || {};
 
+  //   const handleToggle = async (day: string, time: string): Promise<void> => {
+  //     const key = `${day}-${time}`;
+  //     const updatedWeek = {
+  //       ...selectedSlots[weekOffset],
+  //       [key]: !selectedSlots[weekOffset]?.[key],
+  //     };
+
+  //     const updatedAll = {
+  //       ...selectedSlots,
+  //       [weekOffset]: updatedWeek,
+  //     };
+
+  //     setSelectedSlots(updatedAll);
+
+  //     if (!userId) return;
+
+  //     const { error } = await supabase.from("availability").upsert(
+  //       {
+  //         user_id: userId,
+  //         week_offset: weekOffset,
+  //         slots: updatedWeek,
+  //       },
+  //       { onConflict: "user_id,week_offset" }
+  //     );
+
+  //     if (error) {
+  //       console.error("Failed to save availability", error);
+  //       toast.error("Failed to save availability");
+  //     } else {
+  //       toast.success("Availability saved!");
+  //     }
+  //   };
+
   const handleToggle = async (day: string, time: string): Promise<void> => {
+    if (!userId) return;
+
     const key = `${day}-${time}`;
-    const updatedWeek = {
-      ...selectedSlots[weekOffset],
-      [key]: !selectedSlots[weekOffset]?.[key],
+    const currentWeekSlots = selectedSlots[weekOffset] || {};
+    const toggledValue = !currentWeekSlots?.[key];
+
+    // Fetch current saved slots from DB
+    const { data: existing } = await supabase
+      .from("availability")
+      .select("slots")
+      .eq("user_id", userId)
+      .eq("week_offset", weekOffset)
+      .maybeSingle();
+
+    const mergedSlots = {
+      ...(existing?.slots ?? {}),
+      ...currentWeekSlots,
+      [key]: toggledValue,
     };
 
     const updatedAll = {
       ...selectedSlots,
-      [weekOffset]: updatedWeek,
+      [weekOffset]: mergedSlots,
     };
 
     setSelectedSlots(updatedAll);
-
-    if (!userId) return;
 
     const { error } = await supabase.from("availability").upsert(
       {
         user_id: userId,
         week_offset: weekOffset,
-        slots: updatedWeek,
+        slots: mergedSlots,
       },
       { onConflict: "user_id,week_offset" }
     );

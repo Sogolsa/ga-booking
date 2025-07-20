@@ -14,14 +14,54 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error: loginError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (error) {
-      setError(error.message);
+    if (loginError) {
+      setError(loginError.message);
+      return;
+    }
+    //   const { data } = await supabase.auth.getUser();
+    //   const role = data?.user?.user_metadata?.role;
+
+    const { data, error: userError } = await supabase.auth.getUser();
+    const user = data?.user;
+
+    if (user) {
+      const { data: existing } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!existing) {
+        const { error: insertError } = await supabase.from("users").insert({
+          id: user.id,
+          name: user.user_metadata?.name ?? "",
+          role: user.user_metadata?.role ?? "",
+        });
+
+        if (insertError) {
+          console.error(" Insert to users failed:", insertError.message);
+          setError("Insert failed: " + insertError.message);
+          return;
+        } else {
+          console.log(" Inserted user into public.users");
+        }
+      }
+
+      const role = user.user_metadata?.role;
+
+      if (role === "student") {
+        router.push("/book");
+      } else if (role === "tutor") {
+        router.push("/availability");
+      } else {
+        router.push("/");
+      }
     } else {
-      router.push("/account");
+      setError("Could not fetch user after login.");
     }
   };
 
