@@ -4,6 +4,8 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { validateSignup } from "@/lib/validateSignup";
+
 export default function SignupPage() {
   const supabase = createClient();
   const router = useRouter();
@@ -18,6 +20,18 @@ export default function SignupPage() {
   const handleSignup = async () => {
     setError(null);
 
+    const validationError = validateSignup({
+      name,
+      email,
+      password,
+      role,
+      department,
+    });
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     const metadata: { role: string; name?: string; department?: string } = {
       role,
       name,
@@ -30,18 +44,20 @@ export default function SignupPage() {
       metadata.department = department;
     }
 
-    const check = await supabase.auth.signInWithPassword({
-      email,
-      password: "invalid-password",
-    });
+    // const res = await fetch("/api/user", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({ email }),
+    // });
 
-    if (
-      check.error?.message === "Invalid login credentials" &&
-      check.error.status === 400
-    ) {
-      setError("An account with this email already exists. Please log in.");
-      return;
-    }
+    // const { exists } = await res.json();
+
+    // if (exists) {
+    //   setError("An account with this email already exists. Please log in.");
+    //   return;
+    // }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -51,7 +67,7 @@ export default function SignupPage() {
       },
     });
 
-    console.log("🔍 Supabase signup result:", { data, error });
+    console.log("Supabase signup result:", { data, error });
 
     if (error) {
       setError(error.message);

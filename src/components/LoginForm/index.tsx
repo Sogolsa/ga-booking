@@ -39,6 +39,7 @@ export default function LoginForm() {
       if (!existing) {
         const { error: insertError } = await supabase.from("users").insert({
           id: user.id,
+          email: user.email,
           name: user.user_metadata?.name ?? "",
           role: user.user_metadata?.role ?? "",
           department: user.user_metadata?.department ?? null,
