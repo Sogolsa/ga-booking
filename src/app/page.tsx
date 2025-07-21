@@ -1,22 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const supabase = createClient();
   const router = useRouter();
+
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getUser();
       const role = data?.user?.user_metadata?.role;
 
       if (role === "student") {
-        router.push("/book");
+        router.replace("/book");
       } else if (role === "tutor") {
-        router.push("/availability");
+        router.replace("/availability");
       }
     };
 
@@ -32,7 +33,6 @@ export default function Home() {
           Schedule time with your Graduate Assistant or update your
           availability.
         </p>
-
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Link
             href="/login"
@@ -46,12 +46,6 @@ export default function Home() {
           >
             Sign Up
           </Link>
-          {/* <Link
-            href="/account"
-            className="bg-gray-100 text-gray-800 border border-gray-300 rounded-lg px-6 py-3 font-semibold hover:bg-gray-200 transition"
-          >
-            Go to Account
-          </Link> */}
         </div>
 
         <footer className="text-sm text-gray-400 pt-4 border-t">
