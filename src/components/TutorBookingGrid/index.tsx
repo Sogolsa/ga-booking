@@ -165,34 +165,38 @@ export default function TutorBookingGrid({ tutorId }: Props) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-3xl mx-auto mt-8 px-4">
       {availableSlots.length === 0 ? (
-        <p>No available slots</p>
+        <p className="text-center text-gray-500">No available slots</p>
       ) : (
         availableSlots.map((slot, idx) => (
           <div
             key={idx}
-            className="border p-4 rounded flex justify-between items-center"
+            className="bg-white border rounded-lg shadow p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center"
           >
-            <div>
-              <strong>{slot.slot}</strong> (
-              {getDateFromSlot(slot.slot, slot.week_offset)})
+            <div className="mb-2 sm:mb-0">
+              <h3 className="text-lg font-semibold text-gray-800">
+                {slot.slot}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {getDateFromSlot(slot.slot, slot.week_offset)}
+              </p>
             </div>
 
             {slot.studentId ? (
               slot.studentId === studentId ? (
                 <button
                   onClick={() => handleCancel(slot.id)}
-                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-red-700 cursor-pointer"
                 >
                   Cancel
                 </button>
               ) : (
-                <span className="text-yellow-600 text-sm">Booked</span>
+                <span className="text-red-600 text-sm font-medium">Booked</span>
               )
             ) : (
               <button
-                className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orage-200 cursor-pointer"
                 onClick={() => handleBook(slot.week_offset, slot.slot)}
               >
                 Book

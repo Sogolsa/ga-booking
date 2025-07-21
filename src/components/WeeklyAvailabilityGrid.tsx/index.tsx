@@ -91,8 +91,8 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
       const response = await supabase
         .from("appointments")
         .select("week_offset, slot, student:users(name)")
-        .eq("tutor_id", user.id)
-        .eq("week_offset", weekOffset);
+        .eq("tutor_id", user.id);
+      // .eq("week_offset", weekOffset);
 
       const appointments = response.data as Appointment[] | null;
       const appError: PostgrestError | null = response.error;

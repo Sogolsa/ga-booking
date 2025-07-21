@@ -28,7 +28,9 @@ export default function AccountPage() {
         </a>
         <SignOutButton />
       </div>
-      <h1 className="text-2xl font-bold mb-6">Set Weekly Availability</h1>
+      <h1 className=" flex justify-center text-2xl font-bold mb-6">
+        Set Weekly Availability
+      </h1>
       {userId ? <WeeklyAvailabilityGrid /> : <p>Loading user...</p>}
     </main>
   );

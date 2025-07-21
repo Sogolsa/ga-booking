@@ -88,12 +88,12 @@ export default function TutorAppointments() {
                 {getDateFromSlot(appt.slot, appt.week_offset)}) <br />
                 Student: {appt.student?.name ?? "Unknown"}
               </div>
-              <button
+              {/* <button
                 onClick={() => handleCancel(appt.slot, appt.week_offset)}
                 className="text-red-600 hover:underline"
               >
                 Cancel
-              </button>
+              </button> */}
             </div>
           ))
       )}

@@ -54,7 +54,7 @@ export default function LoginPage() {
       const role = user.user_metadata?.role;
 
       if (role === "student") {
-        router.push("/book");
+        router.push("/book/by-ga");
       } else if (role === "tutor") {
         router.push("/availability");
       } else {
@@ -83,7 +83,7 @@ export default function LoginPage() {
         onChange={(e) => setPassword(e.target.value)}
       />
       <button
-        className="w-full bg-blue-600 text-white p-2 cursor-pointer"
+        className="w-full bg-orange-600 text-white p-2 cursor-pointer rounded"
         onClick={handleLogin}
       >
         Login

@@ -36,13 +36,13 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Link
             href="/login"
-            className="bg-blue-600 text-white rounded-lg px-6 py-3 font-semibold hover:bg-blue-700 transition"
+            className="bg-orange-600 text-white rounded-lg px-6 py-3 font-semibold hover:bg-orange-500 transition"
           >
             Log In
           </Link>
           <Link
             href="/signup"
-            className="bg-green-600 text-white rounded-lg px-6 py-3 font-semibold hover:bg-green-700 transition"
+            className="bg-gray-800 text-white rounded-lg px-6 py-3 font-semibold hover:bg-gray-600 transition"
           >
             Sign Up
           </Link>
