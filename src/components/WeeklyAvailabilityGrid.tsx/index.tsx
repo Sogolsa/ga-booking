@@ -66,7 +66,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
       setRole(role);
 
       if (role !== "tutor") {
-        router.push("/book");
+        router.push("/book/by-ga");
         return;
       }
 

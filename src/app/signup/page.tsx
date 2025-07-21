@@ -13,24 +13,29 @@ export default function SignupPage() {
   const [role, setRole] = useState("student");
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [department, setDepartment] = useState("");
 
   const handleSignup = async () => {
     setError(null);
 
-    const metadata: { role: string; name?: string } = { role };
+    const metadata: { role: string; name?: string; department?: string } = {
+      role,
+      name,
+      department,
+    };
     if (name && name.trim() !== "") {
       metadata.name = name;
     }
+    if (role === "tutor" && department && department.trim() !== "") {
+      metadata.department = department;
+    }
+
+    console.log("🟡 Signing up with:", { email, password, metadata });
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        // data: {
-        //   role,
-        //   name,
-        // },
-
         data: metadata,
       },
     });
@@ -38,7 +43,7 @@ export default function SignupPage() {
     if (error) {
       setError(error.message);
     } else {
-      alert("Signup complete! You can now log in.");
+      alert("Please confirm your email!");
       router.push("/login");
     }
   };
@@ -70,16 +75,34 @@ export default function SignupPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
         <select
-          className="w-full mb-4 p-2 border rounded"
+          className="w-full mb-4 p-2 border rounded cursor-pointer"
           value={role}
-          onChange={(e) => setRole(e.target.value)}
+          onChange={(e) => {
+            const selectedRole = e.target.value;
+            setRole(selectedRole);
+            if (selectedRole !== "tutor") {
+              setDepartment(""); // Reset department when not a tutor
+            }
+          }}
         >
           <option value="student">I am a Student</option>
           <option value="tutor">I am a GA / Tutor</option>
         </select>
+        {role === "tutor" && (
+          <select
+            className="w-full mb-4 p-2 border rounded cursor-pointer"
+            value={department}
+            onChange={(e) => setDepartment(e.target.value)}
+          >
+            <option value="">Select your department</option>
+            <option value="Math">Math</option>
+            <option value="Math/Statistics">Math/Statistics</option>
+            <option value="Computer Science">Computer Science</option>
+          </select>
+        )}
 
         <button
-          className="w-full bg-orange-600 text-white p-2 rounded hover:bg-orange-700 transition"
+          className="w-full bg-orange-600 text-white p-2 rounded hover:bg-orange-700 transition cursor-pointer"
           onClick={handleSignup}
         >
           Sign Up

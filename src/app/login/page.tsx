@@ -40,11 +40,12 @@ export default function LoginPage() {
           id: user.id,
           name: user.user_metadata?.name ?? "",
           role: user.user_metadata?.role ?? "",
+          department: user.user_metadata?.department ?? null,
         });
 
         if (insertError) {
           console.error(" Insert to users failed:", insertError.message);
-          setError("Insert failed: " + insertError.message);
+          setError("Database error saving new user: " + insertError.message);
           return;
         } else {
           console.log(" Inserted user into public.users");
