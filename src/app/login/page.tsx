@@ -55,7 +55,7 @@ export default function LoginPage() {
       const role = user.user_metadata?.role;
 
       if (role === "student") {
-        router.push("/book/by-ga");
+        router.push("/book");
       } else if (role === "tutor") {
         router.push("/availability");
       } else {
