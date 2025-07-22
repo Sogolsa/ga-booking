@@ -9,6 +9,7 @@ type User = {
   id: string;
   name: string;
   department?: string;
+  email?: string;
 };
 
 export default function BookByGA() {
@@ -19,7 +20,7 @@ export default function BookByGA() {
     const loadGAs = async () => {
       const { data, error } = await supabase
         .from("users")
-        .select("id, name, department")
+        .select("id, name, department, email")
         .eq("role", "tutor");
 
       if (error) {
@@ -53,11 +54,14 @@ export default function BookByGA() {
                 <h2 className="text-lg font-semibold text-gray-800">
                   {ga.name}
                 </h2>
-                <h3 className="text-sm text-gray-600">{ga.department}</h3>
+                <p className="text-sm gap-2 text-gray-500">{ga.department}</p>
               </div>
-              <p className="text-sm text-gray-500">
-                Click to view availability
-              </p>
+              <div className="flex justify-between items-center mb-1">
+                <p className="text-sm text-gray-500">
+                  Click to view availability
+                </p>
+                <p className="text-sm text-gray-600">{ga.email}</p>
+              </div>
             </div>
           </Link>
         ))}
