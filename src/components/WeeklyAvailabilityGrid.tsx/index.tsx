@@ -156,10 +156,10 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
     let toggledValue: "remote" | "onsite" | null = null;
 
     if (!currentWeekSlots[key]) {
-      toggledValue = "remote";
-    } else if (currentWeekSlots[key] === "remote") {
       toggledValue = "onsite";
     } else if (currentWeekSlots[key] === "onsite") {
+      toggledValue = "remote";
+    } else if (currentWeekSlots[key] === "remote") {
       toggledValue = null;
     }
 
@@ -344,8 +344,8 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
                     }`}
                     onClick={() => handleToggle(day, time)}
                   >
-                    {isSelected === "remote" && "remote"}
-                    {isSelected === "onsite" && "onsite"}
+                    {isSelected === "remote" && "Remote"}
+                    {isSelected === "onsite" && "Onsite"}
                   </td>
                 );
               })}
