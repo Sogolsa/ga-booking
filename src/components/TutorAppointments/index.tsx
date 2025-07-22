@@ -11,6 +11,7 @@ type Appointment = {
   slot: string;
   student: {
     name: string;
+    email: string;
   } | null;
 };
 
@@ -33,7 +34,7 @@ export default function TutorAppointments() {
     const load = async () => {
       const response = await supabase
         .from("appointments")
-        .select("week_offset, slot, student:users(name)")
+        .select("week_offset, slot, student:users(name, email)")
         .eq("tutor_id", tutorId);
 
       const appointments = response.data as Appointment[] | null;
@@ -86,7 +87,14 @@ export default function TutorAppointments() {
               <div>
                 <strong>{appt.slot}</strong> (
                 {getDateFromSlot(appt.slot, appt.week_offset)}) <br />
-                Student: {appt.student?.name ?? "Unknown"}
+                <div className="flex justify-between mt-3">
+                  <span>
+                    <strong>Student:</strong> {appt.student?.name ?? "Unknown"}
+                  </span>
+                  <span>
+                    <strong>Email:</strong> {appt.student?.email ?? "unknownn"}
+                  </span>
+                </div>
               </div>
               {/* <button
                 onClick={() => handleCancel(appt.slot, appt.week_offset)}
