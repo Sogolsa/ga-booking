@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { PostgrestError } from "@supabase/supabase-js";
 import { getDateFromSlot } from "@/lib/utils/dateUtils";
 import { getSlotDate } from "@/lib/utils/dateUtils";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
 
 type Props = {
   tutorId: string;
@@ -36,6 +38,7 @@ export default function TutorBookingGrid({ tutorId }: Props) {
   const [studentId, setStudentId] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [role, setRole] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -224,12 +227,52 @@ export default function TutorBookingGrid({ tutorId }: Props) {
     }
   };
 
+  // const filteredSlots = selectedDate
+  //   ? availableSlots.filter((slot) => {
+  //       const slotDate = getSlotDate(slot.slot, slot.week_offset);
+  //       return slotDate.toDateString() === selectedDate.toDateString();
+  //     })
+  //   : [];
+
+  const filteredSlots = selectedDate
+    ? availableSlots
+        .filter((slot) => {
+          const slotDate = getSlotDate(slot.slot, slot.week_offset);
+          return slotDate.toDateString() === selectedDate.toDateString();
+        })
+        .sort((a, b) => {
+          const timeA = new Date(getDateFromSlot(a.slot, a.week_offset));
+          const timeB = new Date(getDateFromSlot(b.slot, b.week_offset));
+          return timeA.getTime() - timeB.getTime();
+        })
+    : [];
+
   return (
-    <div className="space-y-4 max-w-3xl mx-auto mt-8 px-4">
-      {availableSlots.length === 0 ? (
-        <p className="text-center text-gray-500">No available slots</p>
+    <div className="min-h-screen space-y-4 max-w-3xl mx-auto mt-8 px-4">
+      <h2 className="text-xl font-bold mb-5 text-center">Select a Date</h2>
+      <div className="flex justify-center">
+        <Calendar
+          onChange={(date) => setSelectedDate(date as Date)}
+          value={selectedDate}
+          // navigationLabel={({ label }) => (
+          //   <span className="text-lg font-semibold">{label}</span>
+          // )}
+          tileClassName={({ date, view }) => {
+            const isToday = new Date().toDateString() === date.toDateString();
+            return isToday ? "react-calendar__tile--now" : "";
+          }}
+          className="react-calendar "
+        />
+      </div>
+
+      {filteredSlots.length === 0 ? (
+        <p className="text-center text-gray-500">
+          {selectedDate
+            ? "No available slots for this date."
+            : "Please select a date."}
+        </p>
       ) : (
-        availableSlots.map((slot, idx) => (
+        filteredSlots.map((slot, idx) => (
           <div
             key={idx}
             className="bg-white border rounded-lg shadow p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center"

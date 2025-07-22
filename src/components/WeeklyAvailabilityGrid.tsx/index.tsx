@@ -53,7 +53,6 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
   const [userId, setUserId] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [bookedSlots, setBookedSlots] = useState<Record<string, string>>({});
-
   const [weekOffset, setWeekOffset] = useState(0);
   const router = useRouter();
 
