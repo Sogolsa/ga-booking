@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import { PostgrestError } from "@supabase/supabase-js";
 import { getDateFromSlot } from "@/lib/utils/dateUtils";
+import { getSlotDate } from "@/lib/utils/dateUtils";
 
 type Props = {
   tutorId: string;
@@ -113,12 +114,18 @@ export default function TutorBookingGrid({ tutorId }: Props) {
       console.log("Available slots:", results);
       console.log("RESULTS WITH NAMES", results);
 
-      // setAvailableSlots(results);
-      const sortedResults = results.sort((a, b) => {
-        const dateA = new Date(getDateFromSlot(a.slot, a.week_offset));
-        const dateB = new Date(getDateFromSlot(b.slot, b.week_offset));
-        return dateA.getTime() - dateB.getTime();
-      });
+      const now = new Date();
+
+      const sortedResults = results
+        .filter((slot) => {
+          const date = getSlotDate(slot.slot, slot.week_offset);
+          return date > now;
+        })
+        .sort((a, b) => {
+          const dateA = new Date(getDateFromSlot(a.slot, a.week_offset));
+          const dateB = new Date(getDateFromSlot(b.slot, b.week_offset));
+          return dateA.getTime() - dateB.getTime();
+        });
 
       setAvailableSlots(sortedResults);
     };
@@ -174,8 +181,26 @@ export default function TutorBookingGrid({ tutorId }: Props) {
   };
 
   // let student cancel their app
-  const handleCancel = async (appointmentId: number | undefined) => {
+  const handleCancel = async (
+    appointmentId: number | undefined
+    // slot: string,
+    // week_offset: number
+  ) => {
     if (!appointmentId) return;
+
+    // canceling more than 24 hours in advance
+    // const appointmentDate = getSlotDate(slot, week_offset);
+    // const now = new Date();
+
+    // const hoursDifference =
+    //   (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    // if (hoursDifference < 24) {
+    //   toast.error(
+    //     "You can only cancel appointments more than 24 hours in advance."
+    //   );
+    //   return;
+    // }
 
     const { error } = await supabase
       .from("appointments")
