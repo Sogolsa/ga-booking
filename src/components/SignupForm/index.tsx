@@ -81,7 +81,13 @@ export default function SignupPage() {
 
   return (
     <div className="flex justify-center items-center pt-20">
-      <div className="w-full max-w-md bg-white shadow-2xl rounded-lg p-10">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSignup();
+        }}
+        className="w-full max-w-md bg-white shadow-2xl rounded-lg p-10"
+      >
         <h1 className="text-xl font-bold mb-4 text-center">Sign Up</h1>
 
         <input
@@ -95,6 +101,7 @@ export default function SignupPage() {
           className="w-full mb-2 p-2 border rounded"
           type="email"
           placeholder="Email"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -102,6 +109,7 @@ export default function SignupPage() {
           className="w-full mb-2 p-2 border rounded"
           type="password"
           placeholder="Password"
+          autoComplete="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -144,10 +152,10 @@ export default function SignupPage() {
           >
             <div className="cursor-pointer">Home</div>
           </Link>
-        </div>
 
-        {error && <p className="text-red-600 mt-2">{error}</p>}
-      </div>
+          {error && <p className="text-red-600 mt-2">{error}</p>}
+        </div>
+      </form>
     </div>
   );
 }

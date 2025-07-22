@@ -188,10 +188,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
 
     // Filter out slots that are booked
     const filteredSourceWeek: Record<string, boolean> = Object.fromEntries(
-      Object.entries(sourceWeek).filter(
-        ([slotKey, isAvailable]) =>
-          isAvailable && !bookedSlots[`${weekOffset}-${slotKey}`]
-      )
+      Object.entries(sourceWeek).filter(([slotKey, isAvailable]) => isAvailable)
     );
 
     const updatedSlots = { ...selectedSlots };

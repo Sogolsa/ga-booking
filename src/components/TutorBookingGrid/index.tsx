@@ -33,10 +33,14 @@ export default function TutorBookingGrid({ tutorId }: Props) {
   const supabase = createClient();
   const [studentId, setStudentId] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data?.user?.id) setStudentId(data.user.id);
+      if (data?.user?.id) {
+        setStudentId(data.user.id);
+        setRole(data.user.user_metadata?.role ?? null);
+      }
     });
   }, []);
 
@@ -120,21 +124,44 @@ export default function TutorBookingGrid({ tutorId }: Props) {
   }, [tutorId]);
 
   const handleBook = async (week_offset: number, slot: string) => {
-    if (!studentId) return;
+    // if (!studentId) return;
+    if (!studentId || role === "tutor") {
+      toast.error("Tutors cannot book appointments.");
+      return;
+    }
 
-    const { error } = await supabase.from("appointments").insert({
-      tutor_id: tutorId,
-      student_id: studentId,
-      week_offset,
-      slot,
-    });
+    const actualDate = getDateFromSlot(slot, week_offset);
+
+    const { data, error } = await supabase
+      .from("appointments")
+      .insert({
+        tutor_id: tutorId,
+        student_id: studentId,
+        week_offset,
+        slot,
+        appt_date: actualDate,
+      })
+      .select("id")
+      .single();
 
     if (error) {
       toast.error("Failed to book appointment");
     } else {
       toast.success("Appointment booked!");
+      //   setAvailableSlots((prev) =>
+      //     prev.filter((s) => !(s.week_offset === week_offset && s.slot === slot))
       setAvailableSlots((prev) =>
-        prev.filter((s) => !(s.week_offset === week_offset && s.slot === slot))
+        prev.map((s) =>
+          s.week_offset === week_offset && s.slot === slot
+            ? {
+                ...s,
+                id: data.id,
+                // id: s.id ?? -1, // placeholder until fetch refresh
+                studentId,
+                studentName: "You",
+              }
+            : s
+        )
       );
     }
   };
