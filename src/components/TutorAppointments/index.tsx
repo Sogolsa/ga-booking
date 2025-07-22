@@ -72,48 +72,54 @@ export default function TutorAppointments() {
     }
   };
 
+  const upcomingAppointments = appointments
+    .slice() // avoid mutation
+    .filter(
+      (appt) =>
+        getSlotDate(appt.slot, appt.week_offset).toDateString() >=
+        new Date().toDateString()
+    ) // filter previous dates and compare only string date withuot time
+    .sort(
+      (a, b) =>
+        getSlotDate(a.slot, a.week_offset).getTime() -
+        getSlotDate(b.slot, b.week_offset).getTime()
+    );
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold">Upcoming Appointments</h2>
-      {appointments.length === 0 ? (
+      {upcomingAppointments.length === 0 ? (
         <p>No appointments yet.</p>
       ) : (
-        appointments
-          .slice()
-          .sort(
-            (a, b) =>
-              getSlotDate(a.slot, a.week_offset).getTime() -
-              getSlotDate(b.slot, b.week_offset).getTime()
-          )
-          .map((appt, idx) => (
-            <div key={idx} className="border p-3 rounded">
-              <div>
-                <strong>{appt.slot}</strong> (
-                {getDateFromSlot(appt.slot, appt.week_offset)}) <br />
+        upcomingAppointments.map((appt, idx) => (
+          <div key={idx} className="border p-3 rounded">
+            <div>
+              <strong>{appt.slot}</strong> (
+              {getDateFromSlot(appt.slot, appt.week_offset)}) <br />
+              <span>
+                {appt.availabilityType === "remote" ? (
+                  <span className="text-purple-600 text-sm">Remote</span>
+                ) : (
+                  <span className="text-green-600 text-sm">Onsite</span>
+                )}
+              </span>
+              <div className="flex justify-between mt-3">
                 <span>
-                  {appt.availabilityType === "remote" ? (
-                    <span className="text-purple-600 text-sm">Remote</span>
-                  ) : (
-                    <span className="text-green-600 text-sm">Onsite</span>
-                  )}
+                  <strong>Student:</strong> {appt.student?.name ?? "Unknown"}
                 </span>
-                <div className="flex justify-between mt-3">
-                  <span>
-                    <strong>Student:</strong> {appt.student?.name ?? "Unknown"}
-                  </span>
-                  <span>
-                    <strong>Email:</strong> {appt.student?.email ?? "unknown"}
-                  </span>
-                </div>
+                <span>
+                  <strong>Email:</strong> {appt.student?.email ?? "unknown"}
+                </span>
               </div>
-              {/* <button
+            </div>
+            {/* <button
                 onClick={() => handleCancel(appt.slot, appt.week_offset)}
                 className="text-red-600 hover:underline"
               >
                 Cancel
               </button> */}
-            </div>
-          ))
+          </div>
+        ))
       )}
     </div>
   );

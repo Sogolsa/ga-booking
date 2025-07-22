@@ -11,6 +11,7 @@ import {
   getCurrentWeekRange,
   formatWeekRange,
   daysOfWeek,
+  getSlotDate,
 } from "@/lib/utils/dateUtils";
 
 const startHour = 8;
@@ -81,14 +82,14 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
         return;
       }
 
-      // const grouped = (availability as AvailabilityRow[]).reduce(
-      //   (acc: Record<number, Record<string, boolean>>, row) => {
-      //     acc[row.week_offset] = row.slots;
-      //     return acc;
-      //   },
-      //   {}
-      // );
-
+      /**
+       * Groups the availability data by `week_offset`, transforming the array of `AvailabilityRow`
+       * objects into a nested record structure. The resulting object maps each `week_offset` to its
+       * corresponding `slots` record, where each slot key maps to its availability status
+       * ("onsite", "remote", or null).
+       * @param availability - The array of `AvailabilityRow` objects to be grouped.
+       * @returns A record mapping each `week_offset` to its slots and their availability status.
+       */
       const grouped = (availability as AvailabilityRow[]).reduce(
         (
           acc: Record<number, Record<string, "onsite" | "remote" | null>>,
@@ -99,6 +100,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
         },
         {}
       );
+      console.log("Grouped availability:", grouped);
 
       const response = await supabase
         .from("appointments")
@@ -136,7 +138,11 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
   const weekSlots = selectedSlots[weekOffset] || {};
 
   // total hours per week
-  const totalSlots = Object.values(weekSlots).filter(Boolean).length;
+  // const totalSlots = Object.values(weekSlots).filter(Boolean).length;
+
+  const totalSlots = Object.values(weekSlots).filter(
+    (value) => value === "onsite" || value === "remote"
+  ).length;
   const totalHours = (totalSlots * interval) / 60;
 
   const handleToggle = async (day: string, time: string): Promise<void> => {
@@ -197,9 +203,6 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
       console.error("Failed to save availability", error);
       toast.error("Failed to save availability");
     }
-    // } else {
-    //   toast.success("Availability saved!");
-    // }
   };
 
   const copyAvailabilityToFutureWeeks = async (
@@ -323,6 +326,9 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
               {daysOfWeek.map((day) => {
                 const key = `${day}-${time}`;
                 const isSelected = weekSlots[key];
+                const slotDateTime = getSlotDate(`${day}-${time}`, weekOffset);
+                const isPast = slotDateTime < new Date();
+
                 return (
                   // <td
                   //   key={key}
@@ -333,16 +339,34 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
                   // >
                   //   {isSelected ? "✓" : ""}
                   // </td>
+                  // <td
+                  //   key={key}
+                  //   className={`border px-2 py-2 text-center cursor-pointer transition ${
+                  //     isSelected === "remote"
+                  //       ? "bg-purple-200"
+                  //       : isSelected === "onsite"
+                  //       ? "bg-yellow-300"
+                  //       : "hover:bg-gray-200"
+                  //   }`}
+                  //   onClick={() => handleToggle(day, time)}
+                  // >
+                  //   {isSelected === "remote" && "Remote"}
+                  //   {isSelected === "onsite" && "Onsite"}
+                  // </td>
                   <td
                     key={key}
-                    className={`border px-2 py-2 text-center cursor-pointer transition ${
-                      isSelected === "remote"
-                        ? "bg-purple-200"
+                    className={`border px-2 py-2 text-center transition ${
+                      isPast
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : isSelected === "remote"
+                        ? "bg-purple-200 cursor-pointer"
                         : isSelected === "onsite"
-                        ? "bg-yellow-300"
-                        : "hover:bg-gray-200"
+                        ? "bg-yellow-300 cursor-pointer"
+                        : "hover:bg-gray-200 cursor-pointer"
                     }`}
-                    onClick={() => handleToggle(day, time)}
+                    onClick={() => {
+                      if (!isPast) handleToggle(day, time);
+                    }}
                   >
                     {isSelected === "remote" && "Remote"}
                     {isSelected === "onsite" && "Onsite"}

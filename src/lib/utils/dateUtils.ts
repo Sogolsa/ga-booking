@@ -39,18 +39,43 @@ export function getDateFromSlot(slotLabel: string, weekOffset: number): string {
   });
 }
 
+// export function getSlotDate(slotLabel: string, weekOffset: number): Date {
+//   const dayName = slotLabel.split("-")[0];
+//   const dayOffset = dayMap[dayName] ?? 0;
+
+//   const today = new Date();
+//   const currentDay = today.getDay();
+//   const startOfWeek = new Date(today);
+//   startOfWeek.setDate(today.getDate() - currentDay + weekOffset * 7);
+//   startOfWeek.setHours(0, 0, 0, 0);
+
+//   const date = new Date(startOfWeek);
+//   date.setDate(date.getDate() + dayOffset);
+//   return date;
+// }
+
 export function getSlotDate(slotLabel: string, weekOffset: number): Date {
-  const dayName = slotLabel.split("-")[0];
+  const [dayName, time] = slotLabel.split("-");
   const dayOffset = dayMap[dayName] ?? 0;
 
   const today = new Date();
   const currentDay = today.getDay();
+
   const startOfWeek = new Date(today);
   startOfWeek.setDate(today.getDate() - currentDay + weekOffset * 7);
   startOfWeek.setHours(0, 0, 0, 0);
 
   const date = new Date(startOfWeek);
   date.setDate(date.getDate() + dayOffset);
+
+  if (time) {
+    const [hour, minute] = time.split(":").map(Number);
+    date.setHours(hour);
+    date.setMinutes(minute);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+  }
+
   return date;
 }
 

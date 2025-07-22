@@ -117,6 +117,7 @@ export default function TutorBookingGrid({ tutorId }: Props) {
       const now = new Date();
 
       const sortedResults = results
+        .slice()
         .filter((slot) => {
           const date = getSlotDate(slot.slot, slot.week_offset);
           return date > now;
@@ -187,7 +188,7 @@ export default function TutorBookingGrid({ tutorId }: Props) {
     // week_offset: number
   ) => {
     if (!appointmentId) return;
-
+    /**************************************************************** */
     // canceling more than 24 hours in advance
     // const appointmentDate = getSlotDate(slot, week_offset);
     // const now = new Date();
@@ -201,7 +202,7 @@ export default function TutorBookingGrid({ tutorId }: Props) {
     //   );
     //   return;
     // }
-
+    /************************************************************************* */
     const { error } = await supabase
       .from("appointments")
       .delete()

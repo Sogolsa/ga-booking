@@ -14,7 +14,6 @@ export default function AppointmentsPage() {
             </button>
           </a>
         </div>
-        <h1 className="text-2xl font-bold mb-4">Your Appointments</h1>
         <TutorAppointments />
       </div>
     </main>
