@@ -40,12 +40,13 @@ type Appointment = {
 
 type AvailabilityRow = {
   week_offset: number;
-  slots: Record<string, boolean>;
+  // slots: Record<string, boolean>;
+  slots: Record<string, "onsite" | "remote" | null>;
 };
 
 export default function WeeklyAvailabilityGrid(): JSX.Element {
   const [selectedSlots, setSelectedSlots] = useState<
-    Record<number, Record<string, boolean>>
+    Record<number, Record<string, "onsite" | "remote" | null>>
   >({});
   const supabase = createClient();
   const [userId, setUserId] = useState<string | null>(null);
@@ -66,7 +67,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
       setRole(role);
 
       if (role !== "tutor") {
-        router.push("/book/by-ga");
+        router.push("/book");
         return;
       }
 
@@ -80,8 +81,19 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
         return;
       }
 
+      // const grouped = (availability as AvailabilityRow[]).reduce(
+      //   (acc: Record<number, Record<string, boolean>>, row) => {
+      //     acc[row.week_offset] = row.slots;
+      //     return acc;
+      //   },
+      //   {}
+      // );
+
       const grouped = (availability as AvailabilityRow[]).reduce(
-        (acc: Record<number, Record<string, boolean>>, row) => {
+        (
+          acc: Record<number, Record<string, "onsite" | "remote" | null>>,
+          row
+        ) => {
           acc[row.week_offset] = row.slots;
           return acc;
         },
@@ -139,7 +151,17 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
     }
 
     const currentWeekSlots = selectedSlots[weekOffset] || {};
-    const toggledValue = !currentWeekSlots?.[key];
+    // const toggledValue = !currentWeekSlots?.[key];
+
+    let toggledValue: "remote" | "onsite" | null = null;
+
+    if (!currentWeekSlots[key]) {
+      toggledValue = "remote";
+    } else if (currentWeekSlots[key] === "remote") {
+      toggledValue = "onsite";
+    } else if (currentWeekSlots[key] === "onsite") {
+      toggledValue = null;
+    }
 
     // Fetch current saved slots from DB
     const { data: existing } = await supabase
@@ -174,9 +196,10 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
     if (error) {
       console.error("Failed to save availability", error);
       toast.error("Failed to save availability");
-    } else {
-      toast.success("Availability saved!");
     }
+    // } else {
+    //   toast.success("Availability saved!");
+    // }
   };
 
   const copyAvailabilityToFutureWeeks = async (
@@ -191,9 +214,12 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
     }
 
     // Filter out slots that are booked
-    const filteredSourceWeek: Record<string, boolean> = Object.fromEntries(
-      Object.entries(sourceWeek).filter(([slotKey, isAvailable]) => isAvailable)
-    );
+    const filteredSourceWeek: Record<string, "onsite" | "remote" | null> =
+      Object.fromEntries(
+        Object.entries(sourceWeek).filter(
+          ([slotKey, isAvailable]) => isAvailable
+        )
+      );
 
     const updatedSlots = { ...selectedSlots };
     let hasError = false;
@@ -277,7 +303,6 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
         <thead>
           <tr>
             <th className="w-24 p-2 border text-left bg-gray-100">Time</th>
-
             {daysOfWeek.map((day) => (
               <th key={day} className="p-2 border bg-gray-100 text-center">
                 {day}
@@ -299,14 +324,28 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
                 const key = `${day}-${time}`;
                 const isSelected = weekSlots[key];
                 return (
+                  // <td
+                  //   key={key}
+                  //   className={`border px-2 py-2 text-center cursor-pointer transition ${
+                  //     isSelected ? "bg-yellow-300" : "hover:bg-gray-200"
+                  //   }`}
+                  //   onClick={() => handleToggle(day, time)}
+                  // >
+                  //   {isSelected ? "✓" : ""}
+                  // </td>
                   <td
                     key={key}
                     className={`border px-2 py-2 text-center cursor-pointer transition ${
-                      isSelected ? "bg-yellow-300" : "hover:bg-gray-200"
+                      isSelected === "remote"
+                        ? "bg-purple-200"
+                        : isSelected === "onsite"
+                        ? "bg-yellow-300"
+                        : "hover:bg-gray-200"
                     }`}
                     onClick={() => handleToggle(day, time)}
                   >
-                    {isSelected ? "✓" : ""}
+                    {isSelected === "remote" && "remote"}
+                    {isSelected === "onsite" && "onsite"}
                   </td>
                 );
               })}

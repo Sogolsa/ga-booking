@@ -9,6 +9,7 @@ import { getDateFromSlot, getSlotDate } from "@/lib/utils/dateUtils";
 type Appointment = {
   week_offset: number;
   slot: string;
+  availabilityType: "remote" | "onsite";
   student: {
     name: string;
     email: string;
@@ -34,7 +35,9 @@ export default function TutorAppointments() {
     const load = async () => {
       const response = await supabase
         .from("appointments")
-        .select("week_offset, slot, student:users(name, email)")
+        .select(
+          "week_offset, slot, availabilityType, student:users(name, email)"
+        )
         .eq("tutor_id", tutorId);
 
       const appointments = response.data as Appointment[] | null;
@@ -87,12 +90,19 @@ export default function TutorAppointments() {
               <div>
                 <strong>{appt.slot}</strong> (
                 {getDateFromSlot(appt.slot, appt.week_offset)}) <br />
+                <span>
+                  {appt.availabilityType === "remote" ? (
+                    <span className="text-purple-600 text-sm">Remote</span>
+                  ) : (
+                    <span className="text-green-600 text-sm">Onsite</span>
+                  )}
+                </span>
                 <div className="flex justify-between mt-3">
                   <span>
                     <strong>Student:</strong> {appt.student?.name ?? "Unknown"}
                   </span>
                   <span>
-                    <strong>Email:</strong> {appt.student?.email ?? "unknownn"}
+                    <strong>Email:</strong> {appt.student?.email ?? "unknown"}
                   </span>
                 </div>
               </div>

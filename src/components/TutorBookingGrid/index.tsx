@@ -12,9 +12,9 @@ type Props = {
 
 type Slot = {
   id?: number;
-
   week_offset: number;
   slot: string;
+  availabilityType: "remote" | "onsite";
   studentName?: string | null;
   studentId?: string | null;
 };
@@ -23,6 +23,7 @@ type AppointmentWithStudent = {
   id: number;
   week_offset: number;
   slot: string;
+  availabilityType: "remote" | "onsite";
   student: {
     id: string;
     name: string;
@@ -91,8 +92,9 @@ export default function TutorBookingGrid({ tutorId }: Props) {
 
         console.log("Parsed slots for week", week_offset, slots);
 
-        for (const [time, isAvailable] of Object.entries(slots)) {
-          if (!isAvailable) continue;
+        for (const [time, availabilityType] of Object.entries(slots)) {
+          if (availabilityType !== "remote" && availabilityType !== "onsite")
+            continue;
 
           const appointment = appointments?.find(
             (a) => a.week_offset === week_offset && a.slot === time
@@ -102,6 +104,7 @@ export default function TutorBookingGrid({ tutorId }: Props) {
             id: appointment?.id,
             week_offset,
             slot: time,
+            availabilityType,
             studentName: appointment?.student?.name ?? null,
             studentId: appointment?.student?.id ?? null,
           });
@@ -131,6 +134,9 @@ export default function TutorBookingGrid({ tutorId }: Props) {
     }
 
     const actualDate = getDateFromSlot(slot, week_offset);
+    const selectedSlot = availableSlots.find(
+      (s) => s.week_offset === week_offset && s.slot === slot
+    );
 
     const { data, error } = await supabase
       .from("appointments")
@@ -140,6 +146,7 @@ export default function TutorBookingGrid({ tutorId }: Props) {
         week_offset,
         slot,
         appt_date: actualDate,
+        availabilityType: selectedSlot?.availabilityType ?? "onsite",
       })
       .select("id")
       .single();
@@ -202,9 +209,18 @@ export default function TutorBookingGrid({ tutorId }: Props) {
             className="bg-white border rounded-lg shadow p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center"
           >
             <div className="mb-2 sm:mb-0">
-              <h3 className="text-lg font-semibold text-gray-800">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-10">
                 {slot.slot}
+                <span className="text-sm font-medium">
+                  {slot.availabilityType === "remote" && (
+                    <span className="text-purple-600 text-sm">Remote</span>
+                  )}
+                  {slot.availabilityType === "onsite" && (
+                    <span className="text-green-600 text-sm">Onsite</span>
+                  )}
+                </span>
               </h3>
+
               <p className="text-sm text-gray-600">
                 {getDateFromSlot(slot.slot, slot.week_offset)}
               </p>
