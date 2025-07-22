@@ -123,6 +123,10 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
 
   const weekSlots = selectedSlots[weekOffset] || {};
 
+  // total hours per week
+  const totalSlots = Object.values(weekSlots).filter(Boolean).length;
+  const totalHours = (totalSlots * interval) / 60;
+
   const handleToggle = async (day: string, time: string): Promise<void> => {
     if (!userId) return;
 
@@ -261,6 +265,13 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
           Copy to Next 3 Weeks
         </button>
       </div>
+      {totalSlots > 0 && (
+        <div className="text-center text-gray-700 font-medium mb-4">
+          Available Hrs/Wk:
+          <span className="font-semibold ml-2">{totalHours}</span> hour
+          {totalHours !== 1 ? "s" : ""}
+        </div>
+      )}
 
       <table className="min-w-full border-collapse table-fixed text-sm">
         <thead>
