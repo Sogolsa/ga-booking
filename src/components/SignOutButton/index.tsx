@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function SignOutButton() {
   const supabase = createClient();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -17,7 +20,7 @@ export default function SignOutButton() {
     <button
       onClick={async () => {
         await supabase.auth.signOut();
-        window.location.href = "/";
+        router.push("/");
       }}
       className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer"
     >

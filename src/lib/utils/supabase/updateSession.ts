@@ -70,7 +70,10 @@ export async function updateSession(request: NextRequest) {
   //     return NextResponse.redirect(url);
   //   }
 
-  const path = request.nextUrl.pathname.replace(/\/$/, "").toLowerCase();
+  const path =
+    request.nextUrl.pathname === "/"
+      ? "/"
+      : request.nextUrl.pathname.replace(/\/$/, "").toLowerCase();
 
   // Redirect logged-in users away from /login or /signup
   if (user && ["/login", "/signup"].includes(path)) {

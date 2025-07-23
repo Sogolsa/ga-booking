@@ -78,7 +78,7 @@ export default function TutorAppointments() {
       (appt) =>
         getSlotDate(appt.slot, appt.week_offset).toDateString() >=
         new Date().toDateString()
-    ) // filter previous dates and compare only string date withuot time
+    ) // filter previous dates and compare only string date without time, so GA sees all times today
     .sort(
       (a, b) =>
         getSlotDate(a.slot, a.week_offset).getTime() -

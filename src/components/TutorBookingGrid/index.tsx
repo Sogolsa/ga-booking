@@ -119,6 +119,7 @@ export default function TutorBookingGrid({ tutorId }: Props) {
 
       const now = new Date();
 
+      // only load appointments after now hour
       const sortedResults = results
         .slice()
         .filter((slot) => {
@@ -227,13 +228,19 @@ export default function TutorBookingGrid({ tutorId }: Props) {
     }
   };
 
-  // const filteredSlots = selectedDate
-  //   ? availableSlots.filter((slot) => {
-  //       const slotDate = getSlotDate(slot.slot, slot.week_offset);
-  //       return slotDate.toDateString() === selectedDate.toDateString();
-  //     })
-  //   : [];
-
+  /**
+   * Filters and sorts available booking slots based on the selected date.
+   *
+   * - If a date is selected (`selectedDate`), it filters `availableSlots` to include only those
+   *   whose slot date matches the selected date.
+   * - The filtered slots are then sorted in ascending order by their slot time.
+   * - If no date is selected, returns an empty array.
+   *
+   * @remarks
+   * Relies on `getSlotDate` and `getDateFromSlot` utility functions to extract and compare slot dates and times.
+   *
+   * @returns {Array} An array of slots available on the selected date, sorted by time.
+   */
   const filteredSlots = selectedDate
     ? availableSlots
         .filter((slot) => {
