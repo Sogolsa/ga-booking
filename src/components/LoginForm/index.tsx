@@ -70,36 +70,45 @@ export default function LoginForm() {
 
   return (
     <div className="max-w-sm mx-auto mt-20">
-      <h1 className="text-xl font-bold mb-4">Login</h1>
-      <input
-        className="w-full mb-2 p-2 border"
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        className="w-full mb-2 p-2 border"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <div className="w-full gap-2 flex flex-col">
-        <button
-          className="w-full bg-orange-600 text-white p-2 cursor-pointer rounded"
-          onClick={handleLogin}
-        >
-          Login
-        </button>
-        <Link
-          href="/"
-          className="w-full text-center bg-gray-800 text-white p-2 cursor-pointer rounded"
-        >
-          <div className="cursor-pointer">Home</div>
-        </Link>
-      </div>
-      {error && <p className="text-red-600 mt-2">{error}</p>}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleLogin();
+        }}
+      >
+        <h1 className="text-xl font-bold mb-4">Login</h1>
+        <input
+          className="w-full mb-2 p-2 border"
+          type="email"
+          placeholder="Email"
+          autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          className="w-full mb-2 p-2 border"
+          type="password"
+          placeholder="Password"
+          value={password}
+          autoComplete="current-password"
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <div className="w-full gap-2 flex flex-col">
+          <button
+            type="submit"
+            className="w-full bg-orange-600 text-white p-2 cursor-pointer rounded"
+          >
+            Login
+          </button>
+          <Link
+            href="/"
+            className="w-full text-center bg-gray-800 text-white p-2 cursor-pointer rounded"
+          >
+            <div className="cursor-pointer">Home</div>
+          </Link>
+        </div>
+        {error && <p className="text-red-600 mt-2">{error}</p>}
+      </form>
     </div>
   );
 }

@@ -97,6 +97,7 @@ export default function SignupPage() {
           className="w-full mb-2 p-2 border rounded"
           type="text"
           placeholder="Full Name"
+          autoComplete="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -112,7 +113,7 @@ export default function SignupPage() {
           className="w-full mb-2 p-2 border rounded"
           type="password"
           placeholder="Password"
-          autoComplete="password"
+          autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -143,7 +144,10 @@ export default function SignupPage() {
           </select>
         )}
         <div className="flex flex-col gap-2">
-          <button className="w-full bg-orange-600 text-white p-2 rounded hover:bg-orange-700 transition cursor-pointer">
+          <button
+            type="submit"
+            className="w-full bg-orange-600 text-white p-2 rounded hover:bg-orange-700 transition cursor-pointer"
+          >
             Sign Up
           </button>
           <Link
