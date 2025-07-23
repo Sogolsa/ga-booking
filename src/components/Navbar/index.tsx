@@ -19,33 +19,27 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="bg-white shadow px-4 py-3 flex justify-between items-center">
+    <nav className="bg-gray-800 shadow px-4 py-3 flex justify-between items-center">
       <Link href="/" className="font-bold text-xl text-orange-600">
         Scheduler
       </Link>
       <div className="space-x-4">
         {role === "student" && (
           <>
-            <Link href="/book" className="text-gray-700 hover:underline">
+            <Link href="/book" className="text-white">
               Book
             </Link>
-            <Link href="/my-bookings" className="text-gray-700 hover:underline">
+            {/* <Link href="/my-bookings" className="text-white">
               My Appointments
-            </Link>
+            </Link> */}
           </>
         )}
         {role === "tutor" && (
           <>
-            <Link
-              href="/availability"
-              className="text-gray-700 hover:underline"
-            >
+            <Link href="/availability" className="text-white">
               Availability
             </Link>
-            <Link
-              href="/appointments"
-              className="text-gray-700 hover:underline"
-            >
+            <Link href="/appointments" className="text-white">
               Appointments
             </Link>
           </>

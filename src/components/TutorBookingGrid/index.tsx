@@ -38,7 +38,7 @@ export default function TutorBookingGrid({ tutorId }: Props) {
   const [studentId, setStudentId] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [role, setRole] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {

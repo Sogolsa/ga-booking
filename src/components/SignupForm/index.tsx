@@ -44,21 +44,6 @@ export default function SignupPage() {
       metadata.department = department;
     }
 
-    // const res = await fetch("/api/user", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({ email }),
-    // });
-
-    // const { exists } = await res.json();
-
-    // if (exists) {
-    //   setError("An account with this email already exists. Please log in.");
-    //   return;
-    // }
-
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -71,11 +56,29 @@ export default function SignupPage() {
 
     if (error) {
       setError(error.message);
-    } else if (!data.user) {
-      setError("Something went wrong. You may already have an account.");
-    } else {
+      return;
+    }
+
+    const identities = data?.user?.identities;
+
+    // check if user exists/ no new identities
+    if (Array.isArray(identities) && identities.length === 0) {
+      setError("This email is already registered. Try logging in instead.");
+      // router.push("/login");
+      return;
+    }
+
+    // if new user
+    if (Array.isArray(identities) && identities.length > 0) {
       alert("Please confirm your email!");
       router.push("/login");
+      return;
+    }
+
+    // ✅ Fallback if user is null (just in case — should never hit)
+    if (!data?.user) {
+      setError("Something went wrong. Please try again.");
+      return;
     }
   };
 
@@ -135,15 +138,12 @@ export default function SignupPage() {
           >
             <option value="">Select your department</option>
             <option value="Math">Math</option>
-            <option value="Math/Statistics">Math/Statistics</option>
+            <option value="Math/Statistics">Math/Elementary Stats/Lab</option>
             <option value="Computer Science">Computer Science</option>
           </select>
         )}
         <div className="flex flex-col gap-2">
-          <button
-            className="w-full bg-orange-600 text-white p-2 rounded hover:bg-orange-700 transition cursor-pointer"
-            onClick={handleSignup}
-          >
+          <button className="w-full bg-orange-600 text-white p-2 rounded hover:bg-orange-700 transition cursor-pointer">
             Sign Up
           </button>
           <Link
@@ -153,7 +153,16 @@ export default function SignupPage() {
             <div className="cursor-pointer">Home</div>
           </Link>
 
-          {error && <p className="text-red-600 mt-2">{error}</p>}
+          {error && (
+            <div className="text-red-600 mt-2">
+              <p>{error}</p>
+              {error.includes("already registered") && (
+                <Link href="/login" className="underline text-sm text-blue-600">
+                  Go to Login
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </form>
     </div>

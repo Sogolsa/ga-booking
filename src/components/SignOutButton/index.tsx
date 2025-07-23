@@ -22,7 +22,7 @@ export default function SignOutButton() {
         await supabase.auth.signOut();
         router.push("/");
       }}
-      className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer"
+      className=" text-white cursor-pointer"
     >
       Sign Out
     </button>
