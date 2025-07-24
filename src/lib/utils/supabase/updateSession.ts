@@ -75,6 +75,30 @@ export async function updateSession(request: NextRequest) {
       ? "/"
       : request.nextUrl.pathname.replace(/\/$/, "").toLowerCase();
 
+  // Block students from accessing /availability and /appointments
+  if (
+    user?.user_metadata?.role === "student" &&
+    ["/availability", "/appointments"].some((blockedPath) =>
+      path.startsWith(blockedPath)
+    )
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/book";
+    return NextResponse.redirect(url);
+  }
+
+  // redirect tutors from accessing /book, /book/ga/[id]
+  if (
+    user?.user_metadata?.role === "tutor" &&
+    ["/book", "/book/ga/[id]"].some((blockedPath) =>
+      path.startsWith(blockedPath)
+    )
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/availability";
+    return NextResponse.redirect(url);
+  }
+
   // Redirect logged-in users away from /login or /signup
   if (user && ["/login", "/signup"].includes(path)) {
     const role = user.user_metadata?.role;

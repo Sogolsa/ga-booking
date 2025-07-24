@@ -41,7 +41,6 @@ type Appointment = {
 
 type AvailabilityRow = {
   week_offset: number;
-  // slots: Record<string, boolean>;
   slots: Record<string, "onsite" | "remote" | null>;
 };
 
@@ -99,13 +98,11 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
         },
         {}
       );
-      console.log("Grouped availability:", grouped);
 
       const response = await supabase
         .from("appointments")
         .select("week_offset, slot, student:users(name)")
         .eq("tutor_id", user.id);
-      // .eq("week_offset", weekOffset);
 
       const appointments = response.data as Appointment[] | null;
       const appError: PostgrestError | null = response.error;
@@ -136,9 +133,6 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
 
   const weekSlots = selectedSlots[weekOffset] || {};
 
-  // total hours per week
-  // const totalSlots = Object.values(weekSlots).filter(Boolean).length;
-
   const totalSlots = Object.values(weekSlots).filter(
     (value) => value === "onsite" || value === "remote"
   ).length;
@@ -156,7 +150,6 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
     }
 
     const currentWeekSlots = selectedSlots[weekOffset] || {};
-    // const toggledValue = !currentWeekSlots?.[key];
 
     let toggledValue: "remote" | "onsite" | null = null;
 

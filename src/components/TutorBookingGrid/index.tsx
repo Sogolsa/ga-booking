@@ -51,9 +51,6 @@ export default function TutorBookingGrid({ tutorId }: Props) {
 
   useEffect(() => {
     const load = async () => {
-      console.log("TUTOR ID:", tutorId);
-      console.log("Running load function");
-
       const { data: availability, error: availabilityError } = await supabase
         .from("availability")
         .select("week_offset, slots")
@@ -64,8 +61,6 @@ export default function TutorBookingGrid({ tutorId }: Props) {
         return;
       }
 
-      console.log("availability", availability);
-
       const response = await supabase
         .from("appointments")
         .select("id, week_offset, slot, student:users(id, name)")
@@ -74,12 +69,9 @@ export default function TutorBookingGrid({ tutorId }: Props) {
       const appointments = response.data as AppointmentWithStudent[] | null;
       const appError: PostgrestError | null = response.error;
 
-      console.log("TUTOR ID:", tutorId);
-      console.log("appointments", appointments);
-
-      appointments?.forEach((a) =>
-        console.log("Booked slot:", a.slot, "Student:", a.student?.name)
-      );
+      // appointments?.forEach((a) =>
+      //   console.log("Booked slot:", a.slot, "Student:", a.student?.name)
+      // );
 
       const booked = new Set(
         (appointments ?? []).map((a) => `${a.week_offset}-${a.slot}`)
@@ -114,8 +106,6 @@ export default function TutorBookingGrid({ tutorId }: Props) {
           });
         }
       }
-      console.log("Available slots:", results);
-      console.log("RESULTS WITH NAMES", results);
 
       const now = new Date();
 
@@ -139,7 +129,6 @@ export default function TutorBookingGrid({ tutorId }: Props) {
   }, [tutorId]);
 
   const handleBook = async (week_offset: number, slot: string) => {
-    // if (!studentId) return;
     if (!studentId || role === "tutor") {
       toast.error("Tutors cannot book appointments.");
       return;
@@ -167,15 +156,12 @@ export default function TutorBookingGrid({ tutorId }: Props) {
       toast.error("Failed to book appointment");
     } else {
       toast.success("Appointment booked!");
-      //   setAvailableSlots((prev) =>
-      //     prev.filter((s) => !(s.week_offset === week_offset && s.slot === slot))
       setAvailableSlots((prev) =>
         prev.map((s) =>
           s.week_offset === week_offset && s.slot === slot
             ? {
                 ...s,
                 id: data.id,
-                // id: s.id ?? -1, // placeholder until fetch refresh
                 studentId,
                 studentName: "You",
               }
@@ -261,9 +247,6 @@ export default function TutorBookingGrid({ tutorId }: Props) {
         <Calendar
           onChange={(date) => setSelectedDate(date as Date)}
           value={selectedDate}
-          // navigationLabel={({ label }) => (
-          //   <span className="text-lg font-semibold">{label}</span>
-          // )}
           tileClassName={({ date, view }) => {
             const isToday = new Date().toDateString() === date.toDateString();
             return isToday ? "react-calendar__tile--now" : "";

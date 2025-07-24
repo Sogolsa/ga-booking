@@ -52,8 +52,6 @@ export default function SignupPage() {
       },
     });
 
-    console.log("Supabase signup result:", { data, error });
-
     if (error) {
       setError(error.message);
       return;
@@ -64,7 +62,6 @@ export default function SignupPage() {
     // check if user exists/ no new identities
     if (Array.isArray(identities) && identities.length === 0) {
       setError("This email is already registered. Try logging in instead.");
-      // router.push("/login");
       return;
     }
 
@@ -75,7 +72,7 @@ export default function SignupPage() {
       return;
     }
 
-    // ✅ Fallback if user is null (just in case — should never hit)
+    // Fallback if user is null
     if (!data?.user) {
       setError("Something went wrong. Please try again.");
       return;

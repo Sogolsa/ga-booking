@@ -19,19 +19,7 @@ export default function AccountPage() {
   return (
     <>
       <Navbar />
-
       <main className="min-h-screen p-6">
-        {/* <div className="flex justify-end mb-4"> */}
-        {/* <a
-          href="/appointments"
-          className="px-4 py-2 mr-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          <button type="button" className="cursor-pointer">
-            Appointments
-          </button>
-        </a>
-        <SignOutButton /> */}
-        {/* </div> */}
         <h1 className=" flex justify-center text-2xl font-bold mb-6">
           Set Weekly Availability
         </h1>
