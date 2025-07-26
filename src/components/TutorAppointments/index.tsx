@@ -15,9 +15,9 @@ type Appointment = {
     email: string;
   } | null;
 };
+const supabase = createClient();
 
 export default function TutorAppointments() {
-  const supabase = createClient();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [tutorId, setTutorId] = useState<string | null>(null);
 
@@ -53,24 +53,24 @@ export default function TutorAppointments() {
     load();
   }, [tutorId]);
 
-  const handleCancel = async (slot: string, week_offset: number) => {
-    if (!tutorId) return;
+  // const handleCancel = async (slot: string, week_offset: number) => {
+  //   if (!tutorId) return;
 
-    const { error } = await supabase
-      .from("appointments")
-      .delete()
-      .match({ tutor_id: tutorId, slot, week_offset });
+  //   const { error } = await supabase
+  //     .from("appointments")
+  //     .delete()
+  //     .match({ tutor_id: tutorId, slot, week_offset });
 
-    if (error) {
-      console.error("Error canceling appointment:", error);
-    } else {
-      setAppointments((prev) =>
-        prev.filter(
-          (appt) => !(appt.slot === slot && appt.week_offset === week_offset)
-        )
-      );
-    }
-  };
+  //   if (error) {
+  //     console.error("Error canceling appointment:", error);
+  //   } else {
+  //     setAppointments((prev) =>
+  //       prev.filter(
+  //         (appt) => !(appt.slot === slot && appt.week_offset === week_offset)
+  //       )
+  //     );
+  //   }
+  // };
 
   const upcomingAppointments = appointments
     .slice() // avoid mutation

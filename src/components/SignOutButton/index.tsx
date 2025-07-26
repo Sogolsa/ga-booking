@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
+const supabase = createClient();
+
 export default function SignOutButton() {
-  const supabase = createClient();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const router = useRouter();

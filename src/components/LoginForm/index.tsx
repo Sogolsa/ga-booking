@@ -26,7 +26,7 @@ export default function LoginForm() {
     //   const { data } = await supabase.auth.getUser();
     //   const role = data?.user?.user_metadata?.role;
 
-    const { data, error: userError } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getUser();
     const user = data?.user;
 
     if (user) {

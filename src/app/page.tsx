@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
+const supabase = createClient();
+
 export default function Home() {
-  const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function Home() {
     };
 
     checkUser();
-  }, []);
+  }, [router]);
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white flex items-center justify-center p-8">
       <div className="max-w-2xl w-full bg-white rounded-2xl shadow-lg p-10 text-center space-y-6">

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabaseClient";
-import SignOutButton from "@/components/SignOutButton";
 import Navbar from "@/components/Navbar";
 
 type User = {
@@ -12,9 +11,9 @@ type User = {
   department?: string;
   email?: string;
 };
+const supabase = createClient();
 
 export default function BookByGA() {
-  const supabase = createClient();
   const [gas, setGAs] = useState<User[]>([]);
 
   useEffect(() => {

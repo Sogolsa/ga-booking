@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { toast } from "sonner";
-import { PostgrestError } from "@supabase/supabase-js";
+// import { PostgrestError } from "@supabase/supabase-js";
 import { getDateFromSlot } from "@/lib/utils/dateUtils";
 import { getSlotDate } from "@/lib/utils/dateUtils";
 import Calendar from "react-calendar";
@@ -32,9 +32,9 @@ type AppointmentWithStudent = {
     name: string;
   } | null;
 };
+const supabase = createClient();
 
 export default function TutorBookingGrid({ tutorId }: Props) {
-  const supabase = createClient();
   const [studentId, setStudentId] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [role, setRole] = useState<string | null>(null);
@@ -67,15 +67,15 @@ export default function TutorBookingGrid({ tutorId }: Props) {
         .eq("tutor_id", tutorId);
 
       const appointments = response.data as AppointmentWithStudent[] | null;
-      const appError: PostgrestError | null = response.error;
+      // const _appError: PostgrestError | null = response.error;
 
       // appointments?.forEach((a) =>
       //   console.log("Booked slot:", a.slot, "Student:", a.student?.name)
       // );
 
-      const booked = new Set(
-        (appointments ?? []).map((a) => `${a.week_offset}-${a.slot}`)
-      );
+      // const booked = new Set(
+      //   (appointments ?? []).map((a) => `${a.week_offset}-${a.slot}`)
+      // );
 
       const results: Slot[] = [];
 
@@ -172,27 +172,28 @@ export default function TutorBookingGrid({ tutorId }: Props) {
   };
 
   // let student cancel their app
+  /**************************************************************** */
+  // canceling more than 24 hours in advance
+  // const appointmentDate = getSlotDate(slot, week_offset);
+  // const now = new Date();
+
+  // const hoursDifference =
+  //   (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+  // if (hoursDifference < 24) {
+  //   toast.error(
+  //     "You can only cancel appointments more than 24 hours in advance."
+  //   );
+  //   return;
+  // }
+  /************************************************************************* */
   const handleCancel = async (
     appointmentId: number | undefined
     // slot: string,
     // week_offset: number
   ) => {
     if (!appointmentId) return;
-    /**************************************************************** */
-    // canceling more than 24 hours in advance
-    // const appointmentDate = getSlotDate(slot, week_offset);
-    // const now = new Date();
 
-    // const hoursDifference =
-    //   (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-    // if (hoursDifference < 24) {
-    //   toast.error(
-    //     "You can only cancel appointments more than 24 hours in advance."
-    //   );
-    //   return;
-    // }
-    /************************************************************************* */
     const { error } = await supabase
       .from("appointments")
       .delete()
@@ -202,7 +203,10 @@ export default function TutorBookingGrid({ tutorId }: Props) {
       console.error("Delete failed", error);
       toast.error("Failed to cancel appointment");
     } else {
-      toast.success("Appointment canceled!");
+      toast.success("Appointment canceled!", {
+        description: "Please notify your GA by sending an email.",
+        duration: 8000,
+      });
 
       setAvailableSlots((prev) =>
         prev.map((s) =>
@@ -247,7 +251,7 @@ export default function TutorBookingGrid({ tutorId }: Props) {
         <Calendar
           onChange={(date) => setSelectedDate(date as Date)}
           value={selectedDate}
-          tileClassName={({ date, view }) => {
+          tileClassName={({ date }) => {
             const isToday = new Date().toDateString() === date.toDateString();
             return isToday ? "react-calendar__tile--now" : "";
           }}

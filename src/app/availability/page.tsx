@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import WeeklyAvailabilityGrid from "@/components/WeeklyAvailabilityGrid.tsx";
-import SignOutButton from "@/components/SignOutButton";
 import Navbar from "@/components/Navbar";
 
 export default function AccountPage() {

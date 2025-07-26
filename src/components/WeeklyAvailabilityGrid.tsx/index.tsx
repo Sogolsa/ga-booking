@@ -44,13 +44,14 @@ type AvailabilityRow = {
   slots: Record<string, "onsite" | "remote" | null>;
 };
 
+const supabase = createClient();
+
 export default function WeeklyAvailabilityGrid(): JSX.Element {
   const [selectedSlots, setSelectedSlots] = useState<
     Record<number, Record<string, "onsite" | "remote" | null>>
   >({});
-  const supabase = createClient();
   const [userId, setUserId] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [, setRole] = useState<string | null>(null);
   const [bookedSlots, setBookedSlots] = useState<Record<string, string>>({});
   const [weekOffset, setWeekOffset] = useState(0);
   const router = useRouter();
@@ -124,7 +125,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
     };
 
     fetchUserAndData();
-  }, []);
+  }, [router]);
 
   const weekRange = useMemo(() => {
     const { start, end } = getCurrentWeekRange(weekOffset);
@@ -211,9 +212,7 @@ export default function WeeklyAvailabilityGrid(): JSX.Element {
     // Filter out slots that are booked
     const filteredSourceWeek: Record<string, "onsite" | "remote" | null> =
       Object.fromEntries(
-        Object.entries(sourceWeek).filter(
-          ([slotKey, isAvailable]) => isAvailable
-        )
+        Object.entries(sourceWeek).filter(([, isAvailable]) => isAvailable)
       );
 
     const updatedSlots = { ...selectedSlots };

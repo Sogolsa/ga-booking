@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import SignOutButton from "../SignOutButton";
 
+const supabase = createClient();
+
 export default function Navbar() {
-  const router = useRouter();
-  const supabase = createClient();
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
