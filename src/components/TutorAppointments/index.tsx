@@ -74,11 +74,16 @@ export default function TutorAppointments() {
 
   const upcomingAppointments = appointments
     .slice() // avoid mutation
+    // .filter(
+    //   (appt) =>
+    //     getSlotDate(appt.slot, appt.week_offset).toDateString() >=
+    //     new Date().toDateString()
+    // ) // filter previous dates and compare only string date without time, so GA sees all times today
     .filter(
       (appt) =>
-        getSlotDate(appt.slot, appt.week_offset).toDateString() >=
-        new Date().toDateString()
-    ) // filter previous dates and compare only string date without time, so GA sees all times today
+        getSlotDate(appt.slot, appt.week_offset).getTime() >=
+        new Date().setHours(0, 0, 0, 0) // Midnight today and future
+    )
     .sort(
       (a, b) =>
         getSlotDate(a.slot, a.week_offset).getTime() -

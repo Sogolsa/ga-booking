@@ -203,8 +203,8 @@ export default function TutorBookingGrid({ tutorId }: Props) {
       console.error("Delete failed", error);
       toast.error("Failed to cancel appointment");
     } else {
-      toast.success("Appointment canceled!", {
-        description: "Please notify your GA by sending an email.",
+      toast.success("Please notify your GA by sending an email.", {
+        description: "Appointment canceled!",
         duration: 8000,
       });
 
